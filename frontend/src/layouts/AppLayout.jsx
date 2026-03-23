@@ -6,7 +6,7 @@ import { Toast } from "../components/common/Toast";
 
 const AppLayout = () => (
   <>
-    <main className="screen-shell">
+    <main className="screen-shell pb-32 sm:pb-28">
       <Outlet />
     </main>
     <FloatingActionButton />
@@ -17,4 +17,3 @@ const AppLayout = () => (
 );
 
 export default AppLayout;
-
