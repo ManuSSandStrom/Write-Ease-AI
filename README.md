@@ -90,6 +90,65 @@ npm run build
 
 Run the Node server with production environment variables. A process manager like PM2 or a container runtime is recommended.
 
+## Deployment
+
+### Backend on Render
+
+Use the repo root and deploy the backend service from `backend/`.
+
+Render settings:
+
+- Root Directory: `backend`
+- Build Command: `npm install`
+- Start Command: `npm start`
+- Health Check Path: `/api/health`
+
+Backend environment variables:
+
+- `NODE_ENV=production`
+- `PORT=10000`
+- `MONGODB_URI=your_mongodb_connection_string`
+- `CLIENT_URL=https://your-netlify-site.netlify.app`
+- `ALLOWED_ORIGINS=https://your-netlify-site.netlify.app,http://localhost:5173`
+- `AI_PROVIDER=mock`
+- `AI_API_KEY=your_ai_key`
+- `CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key`
+- `CLERK_SECRET_KEY=your_clerk_secret_key`
+- `START_WITHOUT_DB=false`
+
+### Frontend on Netlify
+
+Use the repo root and deploy the frontend from `frontend/`.
+
+Netlify settings:
+
+- Base directory: `frontend`
+- Build command: `npm run build`
+- Publish directory: `dist`
+
+Frontend environment variables:
+
+- `VITE_API_URL=https://your-render-service.onrender.com/api`
+- `VITE_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key`
+
+### CLI Commands
+
+Render blueprint:
+
+```bash
+render blueprint launch
+```
+
+Netlify CLI:
+
+```bash
+npm install -g netlify-cli
+netlify login
+netlify init
+netlify deploy --build
+netlify deploy --build --prod
+```
+
 ## Notes
 
 - The app works without external AI keys by using modular mock services.

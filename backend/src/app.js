@@ -19,9 +19,21 @@ import { errorHandler, notFound } from "./middleware/errorHandler.js";
 
 const app = express();
 
+app.set("trust proxy", 1);
+
 app.use(
   cors({
-    origin: env.clientUrl,
+    origin(origin, callback) {
+      if (!origin || env.allowedOrigins.length === 0) {
+        return callback(null, true);
+      }
+
+      if (env.allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error(`CORS blocked for origin: ${origin}`));
+    },
     credentials: true
   })
 );

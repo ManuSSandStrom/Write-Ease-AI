@@ -15,6 +15,10 @@ export const env = {
   nodeEnv: process.env.NODE_ENV || "development",
   mongodbUri: process.env.MONGODB_URI,
   clientUrl: process.env.CLIENT_URL,
+  allowedOrigins: (process.env.ALLOWED_ORIGINS || process.env.CLIENT_URL || "")
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean),
   aiProvider: process.env.AI_PROVIDER || "mock",
   aiApiKey: process.env.AI_API_KEY || "",
   clerkPublishableKey: process.env.CLERK_PUBLISHABLE_KEY || "",
