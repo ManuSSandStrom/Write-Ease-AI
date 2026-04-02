@@ -1,12 +1,19 @@
-import { useClerk } from "@clerk/clerk-react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import { GlassCard } from "../../components/common/GlassCard";
 import { GradientButton } from "../../components/common/GradientButton";
 import { stats } from "../../constants/mockData";
+import { clearUser } from "../../store/slices/authSlice";
 
 const ProfilePage = () => {
-  const { signOut } = useClerk();
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
   const user = useSelector((state) => state.auth.user);
+
+  const handleLogout = () => {
+    dispatch(clearUser());
+    navigate("/login", { replace: true });
+  };
 
   return (
     <div className="space-y-6">
@@ -36,7 +43,7 @@ const ProfilePage = () => {
         <h2 className="text-lg font-semibold">Saved files & history</h2>
         <p className="mt-2 text-sm text-zinc-400">Track your drafts, exports, plagiarism reports, and resume versions from one place.</p>
       </GlassCard>
-      <GradientButton variant="ghost" onClick={() => signOut({ redirectUrl: "/login" })}>
+      <GradientButton variant="ghost" onClick={handleLogout}>
         Logout
       </GradientButton>
     </div>

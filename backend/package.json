@@ -9,7 +9,6 @@
     "seed": "node src/data/seed.js"
   },
   "dependencies": {
-    "@clerk/express": "^2.0.6",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "docx": "^9.1.1",

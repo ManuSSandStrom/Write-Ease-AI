@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import { Navigate, Outlet, Route, Routes } from "react-router-dom";
-import { useAuth, useUser } from "@clerk/clerk-react";
 import { useDispatch, useSelector } from "react-redux";
 import SplashScreen from "./pages/SplashScreen";
 import OnboardingPage from "./pages/OnboardingPage";
@@ -22,47 +21,29 @@ import HistoryPage from "./pages/profile/HistoryPage";
 import SettingsPage from "./pages/profile/SettingsPage";
 import AppLayout from "./layouts/AppLayout";
 import AuthLayout from "./layouts/AuthLayout";
-import {
-  clearUser,
-  fetchCurrentUser,
-  syncCurrentUser
-} from "./store/slices/authSlice";
-import { Loader } from "./components/common/Loader";
+import { clearUser, fetchCurrentUser } from "./store/slices/authSlice";
 
 const ProtectedRoute = () => {
-  const { isLoaded, isSignedIn } = useAuth();
-
-  if (!isLoaded) {
-    return <Loader label="Preparing secure session..." />;
-  }
-
-  return isSignedIn ? <Outlet /> : <Navigate to="/login" replace />;
+  const { token } = useSelector((state) => state.auth);
+  return token ? <Outlet /> : <Navigate to="/login" replace />;
 };
 
 const App = () => {
   const dispatch = useDispatch();
-  const { isLoaded, isSignedIn } = useAuth();
-  const { user } = useUser();
+  const { token } = useSelector((state) => state.auth);
 
   useEffect(() => {
-    if (!isLoaded) {
+    if (!token) {
+      dispatch(clearUser());
       return;
     }
 
-    if (isSignedIn && user) {
-      dispatch(
-        syncCurrentUser({
-          name: user.fullName || user.firstName || "WriteEase User",
-          email: user.primaryEmailAddress?.emailAddress,
-          avatar: user.imageUrl || ""
-        })
-      ).then(() => {
-        dispatch(fetchCurrentUser());
+    dispatch(fetchCurrentUser())
+      .unwrap()
+      .catch(() => {
+        dispatch(clearUser());
       });
-    } else {
-      dispatch(clearUser());
-    }
-  }, [dispatch, isLoaded, isSignedIn, user]);
+  }, [dispatch, token]);
 
   return (
     <Routes>

@@ -4,17 +4,52 @@ import { storage } from "../../utils/storage";
 
 const initialAuth = storage.get("writeease_auth", {
   user: null,
+  token: null,
   onboardingSeen: false
 });
 
 const persistAuth = (state) =>
   storage.set("writeease_auth", {
     user: state.user,
+    token: state.token,
     onboardingSeen: state.onboardingSeen
   });
 
-export const syncCurrentUser = createAsyncThunk("auth/sync", authService.sync);
-export const fetchCurrentUser = createAsyncThunk("auth/me", authService.me);
+const toErrorMessage = (error, fallback) =>
+  error?.response?.data?.message || error?.message || fallback;
+
+export const registerUser = createAsyncThunk(
+  "auth/register",
+  async (payload, { rejectWithValue }) => {
+    try {
+      return await authService.register(payload);
+    } catch (error) {
+      return rejectWithValue(toErrorMessage(error, "Unable to create account"));
+    }
+  }
+);
+
+export const loginUser = createAsyncThunk(
+  "auth/login",
+  async (payload, { rejectWithValue }) => {
+    try {
+      return await authService.login(payload);
+    } catch (error) {
+      return rejectWithValue(toErrorMessage(error, "Unable to sign in"));
+    }
+  }
+);
+
+export const fetchCurrentUser = createAsyncThunk(
+  "auth/me",
+  async (_payload, { rejectWithValue }) => {
+    try {
+      return await authService.me();
+    } catch (error) {
+      return rejectWithValue(toErrorMessage(error, "Unable to fetch user"));
+    }
+  }
+);
 
 const authSlice = createSlice({
   name: "auth",
@@ -26,6 +61,8 @@ const authSlice = createSlice({
   reducers: {
     clearUser(state) {
       state.user = null;
+      state.token = null;
+      state.error = null;
       persistAuth(state);
     },
     setOnboardingSeen(state, action) {
@@ -35,21 +72,41 @@ const authSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(syncCurrentUser.pending, (state) => {
+      .addCase(registerUser.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(syncCurrentUser.fulfilled, (state, action) => {
+      .addCase(registerUser.fulfilled, (state, action) => {
         state.loading = false;
         state.user = action.payload.user;
+        state.token = action.payload.token;
         persistAuth(state);
       })
-      .addCase(syncCurrentUser.rejected, (state, action) => {
+      .addCase(registerUser.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message;
+        state.error = action.payload || action.error.message;
+      })
+      .addCase(loginUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(loginUser.fulfilled, (state, action) => {
+        state.loading = false;
+        state.user = action.payload.user;
+        state.token = action.payload.token;
+        persistAuth(state);
+      })
+      .addCase(loginUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || action.error.message;
       })
       .addCase(fetchCurrentUser.fulfilled, (state, action) => {
         state.user = action.payload.user;
+        persistAuth(state);
+      })
+      .addCase(fetchCurrentUser.rejected, (state) => {
+        state.user = null;
+        state.token = null;
         persistAuth(state);
       });
   }

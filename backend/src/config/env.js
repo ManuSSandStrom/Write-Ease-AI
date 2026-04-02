@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const required = ["MONGODB_URI", "CLIENT_URL", "CLERK_SECRET_KEY"];
+const required = ["MONGODB_URI", "CLIENT_URL", "JWT_SECRET"];
 
 for (const key of required) {
   if (!process.env[key]) {
@@ -21,7 +21,10 @@ export const env = {
     .filter(Boolean),
   aiProvider: process.env.AI_PROVIDER || "mock",
   aiApiKey: process.env.AI_API_KEY || "",
-  clerkPublishableKey: process.env.CLERK_PUBLISHABLE_KEY || "",
-  clerkSecretKey: process.env.CLERK_SECRET_KEY || "",
+  jwtSecret: process.env.JWT_SECRET,
+  jwtExpiresIn: process.env.JWT_EXPIRES_IN || "7d",
+  cloudinaryCloudName: process.env.CLOUDINARY_CLOUD_NAME || "",
+  cloudinaryApiKey: process.env.CLOUDINARY_API_KEY || "",
+  cloudinaryApiSecret: process.env.CLOUDINARY_API_SECRET || "",
   startWithoutDb: process.env.START_WITHOUT_DB === "true"
 };

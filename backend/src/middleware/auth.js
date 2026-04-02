@@ -1,47 +1,73 @@
-import { getAuth } from "@clerk/express";
+import { env } from "../config/env.js";
 import { User } from "../models/User.js";
+import { verifyJwt } from "../utils/jwt.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
-export const requireClerkAuth = asyncHandler(async (req, res, next) => {
-  const auth = getAuth(req);
-
-  if (!auth.userId) {
-    return res.status(401).json({ message: "Authentication required" });
+const getTokenFromHeader = (authorizationHeader = "") => {
+  if (!authorizationHeader.startsWith("Bearer ")) {
+    return null;
   }
 
-  req.auth = auth;
-  next();
-});
+  return authorizationHeader.slice("Bearer ".length).trim() || null;
+};
 
-export const protect = asyncHandler(async (req, res, next) => {
-  const auth = getAuth(req);
+const resolveAuthContext = async (req) => {
+  const token = getTokenFromHeader(req.headers.authorization);
 
-  if (!auth.userId) {
-    return res.status(401).json({ message: "Authentication required" });
+  if (!token) {
+    return { token: null, payload: null, user: null };
   }
 
-  const user = await User.findOne({ clerkId: auth.userId }).select("-password");
+  const payload = verifyJwt(token, env.jwtSecret);
+
+  if (!payload.sub) {
+    throw new Error("Token missing subject");
+  }
+
+  const user = await User.findById(payload.sub).select("-password");
 
   if (!user) {
-    return res.status(401).json({ message: "User profile not synced" });
+    throw new Error("User not found");
   }
 
-  req.auth = auth;
-  req.user = user;
-  next();
+  return { token, payload, user };
+};
+
+export const protect = asyncHandler(async (req, res, next) => {
+  try {
+    const context = await resolveAuthContext(req);
+
+    if (!context.user) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
+    req.auth = {
+      token: context.token,
+      userId: context.user._id.toString(),
+      payload: context.payload
+    };
+    req.user = context.user;
+
+    return next();
+  } catch {
+    return res.status(401).json({ message: "Authentication required" });
+  }
 });
 
 export const optionalAuth = asyncHandler(async (req, _res, next) => {
-  const auth = getAuth(req);
-
-  if (!auth.userId) {
-    return next();
-  }
-
   try {
-    const user = await User.findOne({ clerkId: auth.userId }).select("-password");
-    req.user = user || null;
-    req.auth = auth;
+    const context = await resolveAuthContext(req);
+
+    if (context.user) {
+      req.auth = {
+        token: context.token,
+        userId: context.user._id.toString(),
+        payload: context.payload
+      };
+      req.user = context.user;
+    } else {
+      req.user = null;
+    }
   } catch {
     req.user = null;
   }

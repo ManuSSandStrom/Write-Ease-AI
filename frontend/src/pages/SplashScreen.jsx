@@ -2,26 +2,20 @@ import { motion } from "framer-motion";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { useAuth } from "@clerk/clerk-react";
 
 const SplashScreen = () => {
   const navigate = useNavigate();
-  const { onboardingSeen } = useSelector((state) => state.auth);
-  const { isLoaded, isSignedIn } = useAuth();
+  const { onboardingSeen, token } = useSelector((state) => state.auth);
 
   useEffect(() => {
-    if (!isLoaded) {
-      return undefined;
-    }
-
     const timer = setTimeout(() => {
       if (!onboardingSeen) navigate("/onboarding");
-      else if (!isSignedIn) navigate("/login");
+      else if (!token) navigate("/login");
       else navigate("/app/home");
     }, 1800);
 
     return () => clearTimeout(timer);
-  }, [navigate, onboardingSeen, isLoaded, isSignedIn]);
+  }, [navigate, onboardingSeen, token]);
 
   return (
     <div className="screen-shell flex items-center justify-center">
