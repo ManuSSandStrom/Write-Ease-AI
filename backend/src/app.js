@@ -23,11 +23,17 @@ app.set("trust proxy", 1);
 app.use(
   cors({
     origin(origin, callback) {
+      const normalizedOrigin = origin?.replace(/\/+$/, "");
+
       if (!origin || env.allowedOrigins.length === 0) {
         return callback(null, true);
       }
 
-      if (env.allowedOrigins.includes(origin)) {
+      if (env.allowedOrigins.includes("*")) {
+        return callback(null, true);
+      }
+
+      if (normalizedOrigin && env.allowedOrigins.includes(normalizedOrigin)) {
         return callback(null, true);
       }
 

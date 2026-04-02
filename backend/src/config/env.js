@@ -10,15 +10,28 @@ for (const key of required) {
   }
 }
 
+const normalizeOrigin = (origin) => origin.trim().replace(/\/+$/, "");
+
+const parseOrigins = (rawValue = "") =>
+  String(rawValue)
+    .split(",")
+    .map((value) => normalizeOrigin(value))
+    .filter(Boolean);
+
+const defaultAllowedOrigins = ["https://writeeaseai.netlify.app"];
+
 export const env = {
   port: process.env.PORT || 5000,
   nodeEnv: process.env.NODE_ENV || "development",
   mongodbUri: process.env.MONGODB_URI,
   clientUrl: process.env.CLIENT_URL,
-  allowedOrigins: (process.env.ALLOWED_ORIGINS || process.env.CLIENT_URL || "")
-    .split(",")
-    .map((value) => value.trim())
-    .filter(Boolean),
+  allowedOrigins: Array.from(
+    new Set([
+      ...defaultAllowedOrigins,
+      ...parseOrigins(process.env.CLIENT_URL),
+      ...parseOrigins(process.env.ALLOWED_ORIGINS)
+    ])
+  ),
   aiProvider: process.env.AI_PROVIDER || "mock",
   aiApiKey: process.env.AI_API_KEY || "",
   jwtSecret: process.env.JWT_SECRET,
